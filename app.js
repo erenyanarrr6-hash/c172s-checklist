@@ -9,6 +9,8 @@
   var DEADLINE = new Date(2026, 8, 10, 14, 30, 0, 0); // 10 Eylül 2026 14:30
   var PKEY = 'c172s_progress_v1';
   var EKEY = 'c172s_exam_v1';
+  var MODEKEY = 'c172s_mode_v1';
+  var CHUNK = 8;               // uzun checklistler bu boyda bölümlere ayrılır
   var EXAM_MINUTES = 20;
   var EXAM_MIX = { emergency: 3, normal: 3, speed: 8 };
   var WEAK_LIMIT = 0.34; // wrong/seen bu oranın üstündeyse zayıf
@@ -24,6 +26,7 @@
   function delKey(k) { try { localStorage.removeItem(k); } catch (e) {} }
 
   var progress = loadJSON(PKEY, {});
+  var studyMode = loadJSON(MODEKEY, 'order'); // 'order' | 'action' | 'write'
 
   function stat(uid) {
     var s = progress[uid];
@@ -203,23 +206,34 @@
       '<ol class="steps">' + lis + '</ol></div>';
   }
 
-  function promptHTML(item) {
-    var hint;
-    if (item.cat === 'emergency') hint = 'Prosedürün tüm adımlarını sırasıyla yaz. Memory item’ları atlama.';
-    else if (item.cat === 'normal') hint = 'Checklist maddelerini sırasıyla yaz.';
-    else hint = 'Değeri yaz (örn. 105 KIAS).';
+  function promptHTML(item, hint) {
+    if (hint === undefined) {
+      if (item.cat === 'emergency') hint = 'Prosedürün tüm adımlarını sırasıyla yaz. Memory item’ları atlama.';
+      else if (item.cat === 'normal') hint = 'Checklist maddelerini sırasıyla yaz.';
+      else hint = 'Değeri yaz — sadece sayı da yeter (örn. 105).';
+    }
     return '<div class="drill-q">' + esc(item.title) + '</div>' +
-           '<p class="drill-hint">' + hint + '</p>';
+           (hint ? '<p class="drill-hint">' + hint + '</p>' : '');
   }
 
-  /* Bir çalışma bloğu üretir: yazma alanı → cevabı gör → kendini işaretle */
-  function buildDrill(item, onMark) {
+  // "Throttle Control - IDLE (pull full out)" → {label, action}; ayraç yoksa null
+  function splitStep(t) {
+    var i = t.indexOf(' - ');
+    if (i === -1) return null;
+    return { label: t.slice(0, i), action: t.slice(i + 3) };
+  }
+
+  /* ---------- 1) YAZMA ---------- */
+  function buildWriteDrill(item, onMark) {
     var wrap = document.createElement('div');
     var isSpeed = item.cat === 'speed';
+    var numeric = isSpeed && /^[0-9]/.test(item.value);
     wrap.innerHTML =
       promptHTML(item) +
       (isSpeed
-        ? '<input class="ans" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="Cevabını yaz…">'
+        ? '<input class="ans" type="text" inputmode="' + (numeric ? 'decimal' : 'text') + '" ' +
+          'autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" ' +
+          'placeholder="Cevabını yaz…">'
         : '<textarea class="ans" spellcheck="false" autocapitalize="none" placeholder="Hatırladığın adımları buraya yaz…"></textarea>') +
       '<button class="btn btn-primary btn-block js-reveal">CEVABI GÖR</button>' +
       '<div class="js-key"></div>';
@@ -235,15 +249,215 @@
           '<button class="btn btn-danger js-bad">HATA VARDI</button>' +
         '</div>' +
         '<div class="selfnote">Kendin karar ver — kelime kelime aynı olmak zorunda değil, anlam ve sıra önemli.</div>';
-      keyHost.querySelector('.js-ok').addEventListener('click', function () { finish(true); });
-      keyHost.querySelector('.js-bad').addEventListener('click', function () { finish(false); });
+      keyHost.querySelector('.js-ok').addEventListener('click', function () {
+        record(item.uid, true); if (onMark) onMark(true);
+      });
+      keyHost.querySelector('.js-bad').addEventListener('click', function () {
+        record(item.uid, false); if (onMark) onMark(false);
+      });
       keyHost.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
+    return wrap;
+  }
 
-    function finish(ok) {
-      record(item.uid, ok);
-      if (onMark) onMark(ok);
+  /* ---------- 2) YERLEŞTİRME (sırala / aksiyon) ---------- */
+  function buildPlaceDrill(item, kind, onMark) {
+    var el = document.createElement('div');
+
+    var rows = item.steps.map(function (s, i) {
+      var sp = splitStep(s.t);
+      return { i: i, text: s.t, mem: s.m, label: sp && sp.label, action: sp && sp.action };
+    });
+
+    // uzun checklistleri bölümlere ayır — telefonda 32 kutucuk taşınmaz
+    var chunks = [], cur = [], n = 0;
+    rows.forEach(function (r) {
+      var counts = (kind === 'order') || !!r.action;
+      if (kind === 'action' && !r.action && !cur.length) { cur.push(r); return; }
+      cur.push(r);
+      if (counts) { n++; if (n === CHUNK) { chunks.push(cur); cur = []; n = 0; } }
+    });
+    if (cur.length) {
+      var hasSlot = cur.some(function (r) { return kind === 'order' || r.action; });
+      if (!hasSlot && chunks.length) chunks[chunks.length - 1] = chunks[chunks.length - 1].concat(cur);
+      else chunks.push(cur);
     }
+
+    var ci = 0, totalSlots = 0, totalWrong = 0;
+    paint();
+    return el;
+
+    function paint() {
+      var chunk = chunks[ci];
+      var slots = chunk.filter(function (r) { return kind === 'order' || r.action; });
+      var placed = slots.map(function () { return null; });
+      var bank = shuffle(slots.map(function (r, j) {
+        return { text: kind === 'order' ? r.text : r.action, mem: r.mem, id: j + '_' + Math.random() };
+      }));
+      var checked = false;
+
+      var hint = kind === 'order'
+        ? 'Kutucuklara dokunup adımları doğru sıraya diz. Yerleştirdiğine tekrar dokunursan geri alırsın.'
+        : 'Her satırın aksiyonunu havuzdan seçip yerine koy.';
+      el.innerHTML =
+        promptHTML(item, hint) +
+        (chunks.length > 1
+          ? '<div class="chunkhead">BÖLÜM ' + (ci + 1) + '/' + chunks.length +
+            ' · ' + (chunk[0].i + 1) + '–' + (chunk[chunk.length - 1].i + 1) + '. adımlar</div>'
+          : '') +
+        '<div class="slotlist js-slots"></div>' +
+        '<div class="bank-h">HAVUZ</div><div class="bank js-bank"></div>' +
+        '<button class="btn btn-primary btn-block js-check" disabled>KONTROL ET</button>' +
+        '<div class="js-after"></div>';
+
+      var slotHost = el.querySelector('.js-slots');
+      var bankHost = el.querySelector('.js-bank');
+      var checkBtn = el.querySelector('.js-check');
+      var after = el.querySelector('.js-after');
+
+      draw();
+
+      function draw() {
+        // satırlar
+        slotHost.innerHTML = '';
+        var si = -1;
+        chunk.forEach(function (r) {
+          var isSlot = (kind === 'order') || !!r.action;
+          if (!isSlot) {
+            slotHost.insertAdjacentHTML('beforeend',
+              '<div class="ctxrow"><span class="slot-num">' + pad(r.i + 1) + '</span>' +
+              '<span>' + esc(r.text) + '</span></div>');
+            return;
+          }
+          si++;
+          var j = si;
+          var p = placed[j];
+          var cls = 'slot' + (p ? ' filled' : '');
+          if (checked && p) {
+            var expect = kind === 'order' ? r.text : r.action;
+            cls += (p.text === expect) ? ' ok' : ' bad';
+          }
+          var inner = kind === 'action'
+            ? '<span class="slot-label">' + esc(r.label) + '</span>' +
+              '<span class="slot-val">' + (p ? esc(p.text) : '—') + '</span>'
+            : '<span class="slot-val">' + (p ? esc(p.text) : '—') + '</span>';
+          var wrongNote = '';
+          if (checked && p && p.text !== (kind === 'order' ? r.text : r.action)) {
+            wrongNote = '<div class="slot-fix">' + esc(kind === 'order' ? r.text : r.action) + '</div>';
+          }
+          var div = document.createElement('div');
+          div.className = cls;
+          div.innerHTML = '<span class="slot-num">' + pad(r.i + 1) + '</span>' +
+            '<span class="slot-body">' + inner + wrongNote + '</span>';
+          if (!checked) {
+            div.addEventListener('click', function () {
+              if (!placed[j]) return;
+              bank.push(placed[j]);
+              placed[j] = null;
+              draw();
+            });
+          }
+          slotHost.appendChild(div);
+        });
+
+        // havuz
+        bankHost.innerHTML = '';
+        if (checked) {
+          bankHost.parentNode.querySelector('.bank-h').style.display = 'none';
+        }
+        bank.forEach(function (b, k) {
+          var chip = document.createElement('button');
+          chip.className = 'bankchip' + (b.mem && kind === 'order' ? ' memchip' : '');
+          chip.textContent = b.text;
+          chip.addEventListener('click', function () {
+            var free = placed.indexOf(null);
+            if (free === -1) return;
+            placed[free] = b;
+            bank.splice(k, 1);
+            draw();
+          });
+          bankHost.appendChild(chip);
+        });
+
+        checkBtn.disabled = placed.indexOf(null) !== -1;
+      }
+
+      checkBtn.addEventListener('click', function () {
+        checked = true;
+        var wrong = 0;
+        var si2 = -1;
+        chunk.forEach(function (r) {
+          if (!((kind === 'order') || r.action)) return;
+          si2++;
+          var expect = kind === 'order' ? r.text : r.action;
+          if (!placed[si2] || placed[si2].text !== expect) wrong++;
+        });
+        totalSlots += slots.length;
+        totalWrong += wrong;
+        checkBtn.remove();
+        draw();
+
+        var last = (ci === chunks.length - 1);
+        after.innerHTML =
+          '<div class="chunkres ' + (wrong ? 'bad' : 'ok') + '">' +
+            (wrong ? wrong + ' yanlış yerleştirme' : 'bölüm tam doğru') +
+            ' · ' + (slots.length - wrong) + '/' + slots.length +
+          '</div>' +
+          (last
+            ? keyHTML(item) +
+              '<div class="chunkres ' + (totalWrong ? 'bad' : 'ok') + '">TOPLAM ' +
+                (totalSlots - totalWrong) + '/' + totalSlots + '</div>' +
+              '<div class="mark-row"><button class="btn btn-primary js-done" style="grid-column:1/-1">' +
+                (totalWrong ? 'YANLIŞ OLARAK KAYDET' : 'DOĞRU OLARAK KAYDET') + '</button></div>'
+            : '<button class="btn btn-primary btn-block js-next">SONRAKİ BÖLÜM ›</button>');
+
+        if (last) {
+          after.querySelector('.js-done').addEventListener('click', function () {
+            var ok = totalWrong === 0;
+            record(item.uid, ok);
+            if (onMark) onMark(ok);
+          });
+        } else {
+          after.querySelector('.js-next').addEventListener('click', function () {
+            ci++; paint(); el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+        }
+        after.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+  }
+
+  /* ---------- mod seçici + dağıtıcı ---------- */
+  function buildDrill(item, onMark) {
+    var wrap = document.createElement('div');
+    if (item.cat === 'speed') { wrap.appendChild(buildWriteDrill(item, onMark)); return wrap; }
+
+    var sel = document.createElement('div');
+    sel.className = 'mode-seg';
+    sel.innerHTML = [['order', 'SIRALA'], ['action', 'AKSİYON'], ['write', 'YAZ']]
+      .map(function (m) { return '<button data-m="' + m[0] + '">' + m[1] + '</button>'; }).join('');
+    var host = document.createElement('div');
+
+    function paint() {
+      Array.prototype.forEach.call(sel.children, function (b) {
+        b.classList.toggle('active', b.dataset.m === studyMode);
+      });
+      host.innerHTML = '';
+      host.appendChild(studyMode === 'write'
+        ? buildWriteDrill(item, onMark)
+        : buildPlaceDrill(item, studyMode, onMark));
+    }
+    Array.prototype.forEach.call(sel.children, function (b) {
+      b.addEventListener('click', function () {
+        studyMode = b.dataset.m;
+        saveJSON(MODEKEY, studyMode);
+        paint();
+      });
+    });
+
+    wrap.appendChild(sel);
+    wrap.appendChild(host);
+    paint();
     return wrap;
   }
 
@@ -293,8 +507,8 @@
 
     var head = $('studyHead');
     var notes = {
-      emergency: 'POH Bölüm 3 acil durum prosedürleri. Zayıf ve hiç çalışılmamış maddeler üstte.',
-      normal: 'POH Bölüm 4 normal prosedürler. Zayıf ve hiç çalışılmamış maddeler üstte.',
+      emergency: 'POH Bölüm 3 acil durum prosedürleri. Maddeyi aç, SIRALA / AKSİYON / YAZ modundan birini seç.',
+      normal: 'POH Bölüm 4 normal prosedürler. Maddeyi aç, SIRALA / AKSİYON / YAZ modundan birini seç.',
       speed: 'Hız, ağırlık ve motor limitleri. Zayıf olanlar üstte ve karışık destede 2 kat sık çıkar.'
     };
     head.innerHTML = '<div class="head-note"><p>' + notes[studyCat] + '</p>' +
@@ -477,7 +691,8 @@
       '<div class="panel-label"><i></i>' + esc(CAT_NAME[item.cat]) + ' · SORU ' + (examState.idx + 1) + '</div>' +
       promptHTML(item) +
       (isSpeed
-        ? '<input class="ans" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="Cevabını yaz…">'
+        ? '<input class="ans" type="text" inputmode="' + (/^[0-9]/.test(item.value) ? 'decimal' : 'text') + '" ' +
+          'autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="Cevabını yaz…">'
         : '<textarea class="ans" spellcheck="false" autocapitalize="none" placeholder="Hatırladığın adımları buraya yaz…"></textarea>');
     host.appendChild(panel);
 

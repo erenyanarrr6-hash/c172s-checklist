@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>C172S Checklist Trainer</title>
+<meta name="description" content="Cessna 172S G1000 acil durum, normal checklist ve hız/limit ezber çalışma uygulaması.">
+<meta name="theme-color" content="#070b10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="C172S">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <span class="brand-mark">C172S</span>
+      <span class="brand-sub">G1000 · CHECKLIST TRAINER</span>
+    </div>
+    <div class="hdr-clock" id="hdrClock">--</div>
+  </div>
+  <div class="topbar-rule"></div>
+</header>
+
+<main id="main">
+
+  <!-- ============ ANA SAYFA ============ -->
+  <section class="view" id="view-home">
+
+    <div class="panel countdown-panel">
+      <div class="panel-label"><i></i>TELAFİ SINAVINA KALAN</div>
+      <div class="cd-grid" id="cdGrid">
+        <div class="cd-cell"><span class="cd-num" id="cdD">--</span><span class="cd-unit">GÜN</span></div>
+        <div class="cd-cell"><span class="cd-num" id="cdH">--</span><span class="cd-unit">SAAT</span></div>
+        <div class="cd-cell"><span class="cd-num" id="cdM">--</span><span class="cd-unit">DAK</span></div>
+        <div class="cd-cell"><span class="cd-num" id="cdS">--</span><span class="cd-unit">SAN</span></div>
+      </div>
+      <div class="cd-date">10 Eylül 2026 · Perşembe · 14:30</div>
+    </div>
+
+    <div class="panel-label sec"><i></i>DURUM</div>
+    <div class="stat-row" id="statRow"></div>
+
+    <div class="panel-label sec"><i></i>BAŞLA</div>
+    <div class="cta-col">
+      <button class="cta" data-goto="study">
+        <span class="cta-t">Çalışma Modu</span>
+        <span class="cta-d">Kategori kategori yaz → cevabı gör → kendini işaretle</span>
+      </button>
+      <button class="cta cta-warn" data-goto="exam">
+        <span class="cta-t">Sınav Modu</span>
+        <span class="cta-d">20 dakika · 14 soru · ara geri bildirim yok</span>
+      </button>
+    </div>
+
+    <div class="panel-label sec"><i></i>AYARLAR</div>
+    <div class="panel soft">
+      <div class="row-between">
+        <div>
+          <div class="rb-t">İlerlemeyi sıfırla</div>
+          <div class="rb-d">Tüm doğru/yanlış sayaçları silinir.</div>
+        </div>
+        <button class="btn btn-danger btn-sm" id="btnReset">SIFIRLA</button>
+      </div>
+    </div>
+    <p class="footnote">Prosedür metinleri Cessna 172S NAV III G1000 POH (2020) Bölüm 3 &amp; 4 orijinalidir; İngilizce bırakılmıştır. <b class="m-chip-inline">M</b> işaretli satırlar POH'ta koyu yazılmış <i>memory item</i>'lardır.</p>
+  </section>
+
+  <!-- ============ ÇALIŞMA ============ -->
+  <section class="view" id="view-study" hidden>
+    <div class="segbar" id="studyTabs">
+      <button class="seg active" data-cat="emergency">Emergency</button>
+      <button class="seg" data-cat="normal">Normal</button>
+      <button class="seg" data-cat="speed">Hız &amp; Limit</button>
+    </div>
+    <div id="studyHead"></div>
+    <div id="studyList" class="list"></div>
+  </section>
+
+  <!-- ============ DESTE (karışık çalışma) ============ -->
+  <section class="view" id="view-deck" hidden>
+    <div class="deck-bar">
+      <button class="btn btn-ghost btn-sm" id="deckExit">‹ ÇIK</button>
+      <div class="deck-prog"><span id="deckPos">1/1</span></div>
+      <div class="deck-score" id="deckScore">0 ✓ / 0 ✗</div>
+    </div>
+    <div class="progress-track"><div class="progress-bar" id="deckBar"></div></div>
+    <div id="deckHost"></div>
+  </section>
+
+  <!-- ============ SINAV ============ -->
+  <section class="view" id="view-exam" hidden>
+    <div id="examIntro">
+      <div class="panel">
+        <div class="panel-label"><i></i>SINAV MODU</div>
+        <ul class="brief">
+          <li><b>20:00</b> dakika süre</li>
+          <li><b>3</b> Emergency memory items prosedürü</li>
+          <li><b>3</b> Normal checklist</li>
+          <li><b>8</b> Hız &amp; limit değeri</li>
+          <li>Zayıf maddelerin çıkma olasılığı <b>2 kat</b></li>
+          <li>Sınav sırasında <b>hiçbir geri bildirim yok</b></li>
+          <li>Süre bitince veya erken bitirince tüm sorular cevap anahtarıyla gelir, her birini kendin işaretlersin</li>
+        </ul>
+        <button class="btn btn-primary btn-block" id="examStart">SINAVI BAŞLAT</button>
+      </div>
+    </div>
+
+    <div id="examRun" hidden>
+      <div class="exam-bar">
+        <div class="exam-timer" id="examTimer">20:00</div>
+        <div class="exam-pos" id="examPos">1 / 14</div>
+        <button class="btn btn-danger btn-sm" id="examFinish">BİTİR</button>
+      </div>
+      <div class="progress-track"><div class="progress-bar" id="examBar"></div></div>
+      <div id="examHost"></div>
+      <div class="exam-nav">
+        <button class="btn btn-ghost" id="examPrev">‹ ÖNCEKİ</button>
+        <button class="btn btn-primary" id="examNext">SONRAKİ ›</button>
+      </div>
+      <div class="dotrow" id="examDots"></div>
+    </div>
+
+    <div id="examResult" hidden></div>
+  </section>
+
+</main>
+
+<nav class="softkeys" id="nav">
+  <button class="sk active" data-goto="home"><span class="sk-i">◈</span>ANA</button>
+  <button class="sk" data-goto="study"><span class="sk-i">▤</span>ÇALIŞMA</button>
+  <button class="sk" data-goto="exam"><span class="sk-i">⏱</span>SINAV</button>
+</nav>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -863,6 +863,15 @@
 
   /* ---------------- service worker ---------------- */
   if ('serviceWorker' in navigator) {
+    // Yeni sürüm devraldığında sayfayı bir kez tazele — güncelleme
+    // ikinci açılışı beklemeden gelsin (ilk kurulumda tetiklenmez).
+    var hadController = !!navigator.serviceWorker.controller;
+    var reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadController || reloaded) return;
+      reloaded = true;
+      location.reload();
+    });
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('sw.js').catch(function () {});
     });

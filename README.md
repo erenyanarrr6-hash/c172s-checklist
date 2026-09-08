@@ -11,6 +11,15 @@ cevabı görürsün ve kendini işaretlersin.
 - Normal (POH Bölüm 4 normal checklistler)
 - Hız & Limit (V-hızları, ağırlık ve motor limitleri) + "Karışık Deste" seçeneği
 
+Checklist/prosedür maddelerinde üç çalışma biçimi var (seçim hatırlanır):
+- **SIRALA** — adımlar karışık kutucuklar halinde havuzda; dokunarak doğru sıraya dizersin
+- **AKSİYON** — sol tarafta madde adları sırayla yazılı, aksiyonları (OFF, RICH, IDLE CUTOFF…) yerleştirirsin
+- **YAZ** — klasik boşluk doldurma: yaz, cevabı gör, kendini işaretle
+
+Yerleştirme modlarında kontrol otomatiktir (sıra/eşleşme birebir karşılaştırılır);
+12'den uzun checklistler 8 adımlık bölümlere ayrılır. Hız & Limit kartlarında
+yazma korunur, sayısal cevaplarda telefonda sayı klavyesi açılır.
+
 **Sınav Modu** — 20 dakika, 14 soru (3 emergency + 3 normal + 8 hız/limit),
 sınav sırasında hiçbir geri bildirim yok. Bitince tüm sorular cevap anahtarıyla
 gelir, her birini kendin işaretlersin, kategori bazlı skor çıkar.

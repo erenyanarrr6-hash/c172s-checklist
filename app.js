@@ -62,17 +62,20 @@
   }
 
   var ITEMS = [];
-  // Emergency: SADECE memory item'lar (POH'ta koyu yazılan adımlar).
-  // Hiç memory item'ı olmayan prosedürler çalışma listesine girmez.
+  // Emergency: prosedürün TÜM adımları görünür, ama sadece memory item'lar
+  // (POH'ta koyu yazılanlar) soruluyor. Kalanlar bağlam olarak okunur.
+  // Hiç memory item'ı olmayan prosedürler sorulacak bir şey içermediği için
+  // çalışma listesine girmez; Ezber Kağıdı'nda bilgi olarak durur.
   var NO_MEMORY = [];
   EMERGENCY.forEach(function (e) {
-    var mem = e.steps.filter(function (s) { return s.m; });
-    if (!mem.length) { NO_MEMORY.push(e.title); return; }
+    var memCount = e.steps.filter(function (s) { return s.m; }).length;
+    if (!memCount) { NO_MEMORY.push(e); return; }
     ITEMS.push({
       uid: 'em:' + e.id, cat: 'emergency',
       title: e.title,
       tag: CATEGORY_LABELS[e.category] || e.category,
-      steps: mem.map(function (s) { return { t: s.t, m: true }; })
+      steps: e.steps.map(function (s) { return { t: s.t, m: !!s.m }; }),
+      memCount: memCount
     });
   });
   NORMAL.forEach(function (n) {
@@ -238,25 +241,34 @@
     if (cramCat === 'emergency') {
       var groups = {};
       EMERGENCY.forEach(function (e) {
-        var mem = e.steps.filter(function (s) { return s.m; });
-        if (!mem.length) return;
-        (groups[e.category] = groups[e.category] || []).push({ e: e, mem: mem });
+        var memCount = e.steps.filter(function (s) { return s.m; }).length;
+        if (!memCount) return;
+        (groups[e.category] = groups[e.category] || []).push({ e: e, memCount: memCount });
       });
       Object.keys(groups).forEach(function (cat) {
         html += '<div class="cram-group">' + esc(CATEGORY_LABELS[cat] || cat) + '</div>';
         groups[cat].forEach(function (g) {
           html += '<div class="cram-card"><div class="cram-title">' + esc(g.e.title) +
-            '<span>' + g.mem.length + ' MEMORY</span></div>';
-          g.mem.forEach(function (s, i) { html += cramLine(i + 1, s.t, false); });
+            '<span>' + g.memCount + ' MEMORY</span></div>';
+          g.e.steps.forEach(function (s, i) {
+            html += s.m
+              ? cramLine(i + 1, s.t, false)
+              : '<div class="cram-plain"><span class="cram-n">' + (i + 1) + '</span>' + esc(s.t) + '</div>';
+          });
           html += '</div>';
         });
       });
       if (NO_MEMORY.length) {
-        html += '<div class="cram-group">Memory item’ı olmayan prosedürler</div>' +
-          '<div class="cram-card">' +
-          NO_MEMORY.map(function (t) { return '<div class="cram-plain">' + esc(t) + '</div>'; }).join('') +
-          '<p class="cram-note" style="margin:9px 0 0">POH’ta bu prosedürlerin hiçbir adımı koyu değil — ezberlenmesi gereken memory item içermiyorlar.</p>' +
-          '</div>';
+        html += '<div class="cram-group">Memory item’ı yok — sadece bilgi</div>';
+        NO_MEMORY.forEach(function (e) {
+          html += '<div class="cram-card"><div class="cram-title">' + esc(e.title) +
+            '<span style="color:var(--dim);background:var(--panel-2);border-color:var(--line)">BİLGİ</span></div>';
+          e.steps.forEach(function (s, i) {
+            html += '<div class="cram-plain"><span class="cram-n">' + (i + 1) + '</span>' + esc(s.t) + '</div>';
+          });
+          html += '</div>';
+        });
+        html += '<p class="cram-note">POH’ta bu prosedürlerin hiçbir adımı koyu değil — ezberlenmesi zorunlu memory item içermiyorlar, o yüzden sorulmuyorlar.</p>';
       }
     } else if (cramCat === 'normal') {
       NORMAL.forEach(function (n) {
@@ -293,7 +305,8 @@
     return '<div class="key">' +
       '<div class="key-h">' +
       (item.cat === 'emergency'
-        ? 'Memory Items · POH (' + item.steps.length + ' adım)'
+        ? 'POH · ' + item.memCount + ' memory item (sarı) + ' +
+          (item.steps.length - item.memCount) + ' bilgi adımı'
         : 'Cevap Anahtarı · POH') + '</div>' +
       '<ol class="steps">' + lis + '</ol></div>';
   }
@@ -361,22 +374,28 @@
       return { i: i, text: s.t, mem: s.m, label: sp && sp.label, action: sp && sp.action };
     });
 
+    // Hangi satır soruluyor? Emergency'de sadece memory item'lar; kalanlar
+    // yerinde durur ama bilgi olarak okunur (POH'un kendi düzeni).
+    function isAsked(r) {
+      if (item.cat === 'emergency' && !r.mem) return false;
+      return kind === 'order' ? true : !!r.action;
+    }
+
     // uzun checklistleri dengeli bölümlere ayır — telefonda 32 kutucuk taşınmaz
-    var slotCount = rows.filter(function (r) { return kind === 'order' || r.action; }).length;
+    var slotCount = rows.filter(isAsked).length;
     var nChunks = Math.max(1, Math.ceil(slotCount / CHUNK));
     var size = Math.ceil(slotCount / nChunks);
 
     var chunks = [], cur = [], n = 0;
     rows.forEach(function (r) {
-      var counts = (kind === 'order') || !!r.action;
-      if (kind === 'action' && !r.action && !cur.length) { cur.push(r); return; }
+      if (!isAsked(r) && !cur.length) { cur.push(r); return; } // baştaki bağlam satırları
       cur.push(r);
-      if (counts) { n++; if (n === size) { chunks.push(cur); cur = []; n = 0; } }
+      if (isAsked(r)) { n++; if (n === size) { chunks.push(cur); cur = []; n = 0; } }
     });
     if (cur.length) {
-      var hasSlot = cur.some(function (r) { return kind === 'order' || r.action; });
-      if (!hasSlot && chunks.length) chunks[chunks.length - 1] = chunks[chunks.length - 1].concat(cur);
-      else chunks.push(cur);
+      if (!cur.some(isAsked) && chunks.length) {
+        chunks[chunks.length - 1] = chunks[chunks.length - 1].concat(cur);
+      } else chunks.push(cur);
     }
 
     var ci = 0, totalSlots = 0, totalWrong = 0;
@@ -385,7 +404,7 @@
 
     function paint() {
       var chunk = chunks[ci];
-      var slots = chunk.filter(function (r) { return kind === 'order' || r.action; });
+      var slots = chunk.filter(isAsked);
       var placed = slots.map(function () { return null; });
       var bank = shuffle(slots.map(function (r, j) {
         return { text: kind === 'order' ? r.text : r.action, mem: r.mem, id: j + '_' + Math.random() };
@@ -395,6 +414,9 @@
       var hint = kind === 'order'
         ? 'Kutucuklara dokunup adımları doğru sıraya diz. Yerleştirdiğine tekrar dokunursan geri alırsın.'
         : 'Her satırın aksiyonunu havuzdan seçip yerine koy.';
+      if (item.cat === 'emergency') {
+        hint += ' Soluk satırlar POH’ta koyu değil — sorulmuyor, sadece bilgi olarak duruyor.';
+      }
       el.innerHTML =
         promptHTML(item, hint) +
         (chunks.length > 1
@@ -418,8 +440,7 @@
         slotHost.innerHTML = '';
         var si = -1;
         chunk.forEach(function (r) {
-          var isSlot = (kind === 'order') || !!r.action;
-          if (!isSlot) {
+          if (!isAsked(r)) {
             slotHost.insertAdjacentHTML('beforeend',
               '<div class="ctxrow"><span class="slot-num">' + pad(r.i + 1) + '</span>' +
               '<span>' + esc(r.text) + '</span></div>');
@@ -483,7 +504,7 @@
         var wrong = 0;
         var si2 = -1;
         chunk.forEach(function (r) {
-          if (!((kind === 'order') || r.action)) return;
+          if (!isAsked(r)) return;
           si2++;
           var expect = kind === 'order' ? r.text : r.action;
           if (!placed[si2] || placed[si2].text !== expect) wrong++;
@@ -581,7 +602,10 @@
     var s = stat(item.uid);
     var html = '<span class="chip cat">' + esc(item.tag) + '</span>';
     if (item.cat === 'emergency') {
-      html += '<span class="chip mem">' + item.steps.length + ' MEMORY ITEM</span>';
+      html += '<span class="chip mem">' + item.memCount + ' MEMORY ITEM</span>';
+      if (item.steps.length > item.memCount) {
+        html += '<span class="chip">+' + (item.steps.length - item.memCount) + ' bilgi</span>';
+      }
     } else if (item.cat === 'normal') {
       html += '<span class="chip">' + item.steps.length + ' adım</span>';
     }

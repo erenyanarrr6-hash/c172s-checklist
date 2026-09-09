@@ -1,6 +1,6 @@
 /* C172S Checklist Trainer — service worker
    Uygulama kabuğu önbelleğe alınır; uçak modunda / internetsiz de açılır. */
-const CACHE = 'c172s-v4';
+const CACHE = 'c172s-v5';
 const ASSETS = [
   './',
   'index.html',
@@ -15,9 +15,11 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
+  // {cache:'reload'} şart: aksi halde dosyalar tarayıcının HTTP önbelleğinden
+  // gelir ve sürüm artsa bile eski sürüm önbelleğe yazılır.
   e.waitUntil(
     caches.open(CACHE)
-      .then((c) => c.addAll(ASSETS))
+      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' }))))
       .then(() => self.skipWaiting())
   );
 });

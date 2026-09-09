@@ -6,8 +6,13 @@ cevabı görürsün ve kendini işaretlersin.
 
 ## Modlar
 
+**Ezber Kağıdı** — 49 memory item, 13 normal checklist ve 39 hız/limit değeri tek
+sayfada. "Cevapları Gizle" ile sağ taraf kapanır, satıra dokununca açılır — sınavdan
+önceki son tekrar için.
+
 **Çalışma Modu** — üç kategori ayrı ayrı:
-- Emergency (POH Bölüm 3 acil durum prosedürleri, memory item'lar `M` ile işaretli)
+- Emergency (POH Bölüm 3 — **yalnızca memory item'lar**, yani POH'ta koyu yazılan
+  ezberlenmesi zorunlu adımlar; POH bold taraması ile doğrulandı)
 - Normal (POH Bölüm 4 normal checklistler)
 - Hız & Limit (V-hızları, ağırlık ve motor limitleri) + "Karışık Deste" seçeneği
 
@@ -48,4 +53,9 @@ manifest.json PWA manifesti
 icons/        uygulama ikonları
 ```
 
-Prosedür metinleri POH orijinali olduğu için İngilizce bırakılmıştır; arayüz Türkçedir.
+Arayüz sınav kağıdı gibi beyaz temalıdır; memory item'lar fosforlu kalem vurgusuyla
+işaretlidir. Prosedür metinleri POH orijinali olduğu için İngilizce bırakılmıştır.
+
+POH'ta hiç koyu adımı olmayan 4 prosedür (Emergency Landing Without Engine Power,
+Precautionary Landing With Engine Power, Ditching, Excessive Fuel Vapor) çalışma
+listesinde yer almaz; Ezber Kağıdı'nda ayrı bir başlık altında listelenir.

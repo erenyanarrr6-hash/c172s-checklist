@@ -62,12 +62,17 @@
   }
 
   var ITEMS = [];
+  // Emergency: SADECE memory item'lar (POH'ta koyu yazılan adımlar).
+  // Hiç memory item'ı olmayan prosedürler çalışma listesine girmez.
+  var NO_MEMORY = [];
   EMERGENCY.forEach(function (e) {
+    var mem = e.steps.filter(function (s) { return s.m; });
+    if (!mem.length) { NO_MEMORY.push(e.title); return; }
     ITEMS.push({
       uid: 'em:' + e.id, cat: 'emergency',
       title: e.title,
       tag: CATEGORY_LABELS[e.category] || e.category,
-      steps: e.steps.map(function (s) { return { t: s.t, m: !!s.m }; })
+      steps: mem.map(function (s) { return { t: s.t, m: true }; })
     });
   });
   NORMAL.forEach(function (n) {
@@ -107,7 +112,7 @@
   }
 
   /* ---------------- görünüm yönetimi ---------------- */
-  var VIEWS = ['home', 'study', 'deck', 'exam'];
+  var VIEWS = ['home', 'cram', 'study', 'deck', 'exam'];
   var current = 'home';
 
   function showView(name) {
@@ -125,6 +130,7 @@
 
   function go(name) {
     if (name === 'home') renderHome();
+    if (name === 'cram') renderCram();
     if (name === 'study') renderStudy();
     if (name === 'exam') { if (!examState) resetExamView(); }
     showView(name);
@@ -190,6 +196,91 @@
     alert('İlerleme sıfırlandı.');
   });
 
+  /* ---------------- EZBER KAĞIDI ---------------- */
+  var cramCat = 'emergency';
+  var cramMasked = false;
+
+  Array.prototype.forEach.call(document.querySelectorAll('#cramTabs .seg'), function (b) {
+    b.addEventListener('click', function () { cramCat = b.dataset.cat; renderCram(); });
+  });
+  $('cramMask').addEventListener('click', function () {
+    cramMasked = !cramMasked;
+    renderCram();
+  });
+
+  function cramLine(n, text, plainIfNoSplit) {
+    var sp = splitStep(text);
+    if (!sp) {
+      return plainIfNoSplit
+        ? '<div class="cram-plain">' + esc(text) + '</div>'
+        : '<div class="cram-line' + (cramMasked ? ' masked' : '') + '">' +
+            '<span class="cram-n">' + n + '</span>' +
+            '<span class="cram-a">' + esc(text) + '</span></div>';
+    }
+    return '<div class="cram-line' + (cramMasked ? ' masked' : '') + '">' +
+      '<span class="cram-n">' + n + '</span>' +
+      '<span class="cram-l">' + esc(sp.label) + ' —</span>' +
+      '<span class="cram-a">' + esc(sp.action) + '</span></div>';
+  }
+
+  function renderCram() {
+    Array.prototype.forEach.call(document.querySelectorAll('#cramTabs .seg'), function (b) {
+      b.classList.toggle('active', b.dataset.cat === cramCat);
+    });
+    $('cramMask').textContent = cramMasked ? 'CEVAPLARI GÖSTER' : 'CEVAPLARI GİZLE';
+    $('cramNote').textContent = cramMasked
+      ? 'Gizli satıra dokunursan o satır açılır.'
+      : 'Sadece okuyarak tekrar et; hazır olunca cevapları gizle.';
+
+    var host = $('cramBody');
+    var html = '';
+
+    if (cramCat === 'emergency') {
+      var groups = {};
+      EMERGENCY.forEach(function (e) {
+        var mem = e.steps.filter(function (s) { return s.m; });
+        if (!mem.length) return;
+        (groups[e.category] = groups[e.category] || []).push({ e: e, mem: mem });
+      });
+      Object.keys(groups).forEach(function (cat) {
+        html += '<div class="cram-group">' + esc(CATEGORY_LABELS[cat] || cat) + '</div>';
+        groups[cat].forEach(function (g) {
+          html += '<div class="cram-card"><div class="cram-title">' + esc(g.e.title) +
+            '<span>' + g.mem.length + ' MEMORY</span></div>';
+          g.mem.forEach(function (s, i) { html += cramLine(i + 1, s.t, false); });
+          html += '</div>';
+        });
+      });
+      if (NO_MEMORY.length) {
+        html += '<div class="cram-group">Memory item’ı olmayan prosedürler</div>' +
+          '<div class="cram-card">' +
+          NO_MEMORY.map(function (t) { return '<div class="cram-plain">' + esc(t) + '</div>'; }).join('') +
+          '<p class="cram-note" style="margin:9px 0 0">POH’ta bu prosedürlerin hiçbir adımı koyu değil — ezberlenmesi gereken memory item içermiyorlar.</p>' +
+          '</div>';
+      }
+    } else if (cramCat === 'normal') {
+      NORMAL.forEach(function (n) {
+        html += '<div class="cram-card"><div class="cram-title">' + esc(n.title) +
+          '<span>' + n.items.length + ' ADIM</span></div>';
+        n.items.forEach(function (t, i) { html += cramLine(i + 1, t, false); });
+        html += '</div>';
+      });
+    } else {
+      html += '<div class="cram-card">';
+      SPEEDS.forEach(function (s) {
+        html += '<div class="cram-line cram-sp' + (cramMasked ? ' masked' : '') + '">' +
+          '<span class="cram-l">' + esc(s.q) + '</span>' +
+          '<span class="cram-a">' + esc(s.a) + '</span></div>';
+      });
+      html += '</div>';
+    }
+
+    host.innerHTML = html;
+    Array.prototype.forEach.call(host.querySelectorAll('.cram-line'), function (l) {
+      l.addEventListener('click', function () { l.classList.toggle('masked'); });
+    });
+  }
+
   /* ---------------- CEVAP ANAHTARI ---------------- */
   function keyHTML(item) {
     if (item.cat === 'speed') {
@@ -199,16 +290,17 @@
     var lis = item.steps.map(function (s) {
       return '<li class="' + (s.m ? 'mem' : '') + '">' + esc(s.t) + '</li>';
     }).join('');
-    var memCount = item.steps.filter(function (s) { return s.m; }).length;
     return '<div class="key">' +
-      '<div class="key-h">Cevap Anahtarı · POH' +
-      (memCount ? ' · ' + memCount + ' memory item' : '') + '</div>' +
+      '<div class="key-h">' +
+      (item.cat === 'emergency'
+        ? 'Memory Items · POH (' + item.steps.length + ' adım)'
+        : 'Cevap Anahtarı · POH') + '</div>' +
       '<ol class="steps">' + lis + '</ol></div>';
   }
 
   function promptHTML(item, hint) {
     if (hint === undefined) {
-      if (item.cat === 'emergency') hint = 'Prosedürün tüm adımlarını sırasıyla yaz. Memory item’ları atlama.';
+      if (item.cat === 'emergency') hint = 'Bu prosedürün memory item’larını sırasıyla yaz.';
       else if (item.cat === 'normal') hint = 'Checklist maddelerini sırasıyla yaz.';
       else hint = 'Değeri yaz — sadece sayı da yeter (örn. 105).';
     }
@@ -269,13 +361,17 @@
       return { i: i, text: s.t, mem: s.m, label: sp && sp.label, action: sp && sp.action };
     });
 
-    // uzun checklistleri bölümlere ayır — telefonda 32 kutucuk taşınmaz
+    // uzun checklistleri dengeli bölümlere ayır — telefonda 32 kutucuk taşınmaz
+    var slotCount = rows.filter(function (r) { return kind === 'order' || r.action; }).length;
+    var nChunks = Math.max(1, Math.ceil(slotCount / CHUNK));
+    var size = Math.ceil(slotCount / nChunks);
+
     var chunks = [], cur = [], n = 0;
     rows.forEach(function (r) {
       var counts = (kind === 'order') || !!r.action;
       if (kind === 'action' && !r.action && !cur.length) { cur.push(r); return; }
       cur.push(r);
-      if (counts) { n++; if (n === CHUNK) { chunks.push(cur); cur = []; n = 0; } }
+      if (counts) { n++; if (n === size) { chunks.push(cur); cur = []; n = 0; } }
     });
     if (cur.length) {
       var hasSlot = cur.some(function (r) { return kind === 'order' || r.action; });
@@ -484,10 +580,10 @@
   function statChips(item) {
     var s = stat(item.uid);
     var html = '<span class="chip cat">' + esc(item.tag) + '</span>';
-    if (item.cat !== 'speed') {
-      var mem = item.steps.filter(function (x) { return x.m; }).length;
-      html += '<span class="chip">' + item.steps.length + ' adım' +
-              (mem ? ' · ' + mem + ' M' : '') + '</span>';
+    if (item.cat === 'emergency') {
+      html += '<span class="chip mem">' + item.steps.length + ' MEMORY ITEM</span>';
+    } else if (item.cat === 'normal') {
+      html += '<span class="chip">' + item.steps.length + ' adım</span>';
     }
     if (s.seen === 0) {
       html += '<span class="chip new">HİÇ ÇALIŞILMADI</span>';
@@ -507,15 +603,13 @@
 
     var head = $('studyHead');
     var notes = {
-      emergency: 'POH Bölüm 3 acil durum prosedürleri. Maddeyi aç, SIRALA / AKSİYON / YAZ modundan birini seç.',
+      emergency: 'Sadece memory item’lar (POH’ta koyu yazılan adımlar). Maddeyi aç, SIRALA / AKSİYON / YAZ modundan birini seç.',
       normal: 'POH Bölüm 4 normal prosedürler. Maddeyi aç, SIRALA / AKSİYON / YAZ modundan birini seç.',
       speed: 'Hız, ağırlık ve motor limitleri. Zayıf olanlar üstte ve karışık destede 2 kat sık çıkar.'
     };
     head.innerHTML = '<div class="head-note"><p>' + notes[studyCat] + '</p>' +
-      (studyCat === 'speed'
-        ? '<button class="btn btn-primary btn-sm" id="deckStart">KARIŞIK DESTE</button>'
-        : '') + '</div>';
-    if (studyCat === 'speed') $('deckStart').addEventListener('click', startDeck);
+      '<button class="btn btn-primary btn-sm" id="deckStart">KARIŞIK DESTE</button></div>';
+    $('deckStart').addEventListener('click', function () { startDeck(studyCat); });
 
     var list = $('studyList');
     list.innerHTML = '';
@@ -566,13 +660,13 @@
   /* ---------------- KARIŞIK DESTE ---------------- */
   var deck = null;
 
-  function startDeck() {
+  function startDeck(cat) {
     var cards = [];
-    pool('speed').forEach(function (it) {
+    pool(cat || 'speed').forEach(function (it) {
       cards.push(it);
       if (isWeak(it.uid)) cards.push(it); // zayıf olan destede 2 kat
     });
-    deck = { cards: shuffle(cards), i: 0, ok: 0, bad: 0 };
+    deck = { cat: cat || 'speed', cards: shuffle(cards), i: 0, ok: 0, bad: 0 };
     showView('deck');
     renderDeck();
   }
@@ -594,7 +688,7 @@
           '<button class="btn btn-primary btn-block" id="deckAgain">YENİ DESTE</button>' +
           '<button class="btn btn-ghost btn-block" data-goto="study">LİSTEYE DÖN</button>' +
         '</div>';
-      $('deckAgain').addEventListener('click', startDeck);
+      $('deckAgain').addEventListener('click', function () { startDeck(deck.cat); });
       return;
     }
 

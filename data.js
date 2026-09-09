@@ -518,5 +518,96 @@ const SPEEDS = [
   { q: 'Usable Fuel (total, both tanks)', a: '53.0 US GAL' },
   { q: 'Unusable Fuel (total, both tanks)', a: '3.0 US GAL' },
   { q: 'Autopilot Maximum Engagement Speed', a: '150 KIAS' },
-  { q: 'Autopilot Minimum Engagement Speed', a: '70 KIAS' }
+  { q: 'Autopilot Minimum Engagement Speed', a: '70 KIAS' },
+  { q: 'Airspeed Indicator - White Arc (Full Flap Operating Range)', a: '40 - 85 KIAS' },
+  { q: 'Airspeed Indicator - Green Arc (Normal Operating Range)', a: '48 - 129 KIAS' },
+  { q: 'Airspeed Indicator - Yellow Arc (Caution Range)', a: '129 - 163 KIAS' },
+  { q: 'Airspeed Indicator - Red Line', a: '163 KIAS' },
+  { q: 'Cylinder Head Temperature - Green Arc', a: '200 - 500 °F' },
+  { q: 'Oil Temperature - Green Arc', a: '100 - 245 °F' },
+  { q: 'Oil Pressure - Green Arc', a: '50 - 90 PSI' },
+  { q: 'Fuel Quantity - Green Arc', a: '5 - 24 GALLONS' },
+  { q: 'Fuel Flow - Green Arc', a: '0 - 12 GPH' },
+  { q: 'Vacuum Indicator - Green Arc', a: '4.5 - 5.5 in.Hg' },
+  { q: 'Tachometer - Green Arc, Sea Level', a: '2100 - 2500 RPM' },
+  { q: 'Enroute Climb Speed, 10,000 ft (Normal)', a: '70 - 80 KIAS' },
+  { q: 'Max Baggage - Area B (Station 108 to 142)', a: '50 LBS' },
+  { q: 'Maximum Takeoff Weight (Utility Category)', a: '2200 LBS' }
 ];
+
+// ============================================================
+// GERÇEK SINAV KAĞIDI — "CESSNA 172S NORMAL USÜLLER SINAVI"
+// Sorular sınav kağıdının birebir sırası; cevaplar POH 2020'den
+// (Bölüm 2 limitler / Bölüm 4 normal usüller) doğrulanarak yazıldı.
+// ============================================================
+const EXAM_PAPER = {
+  title: 'CESSNA 172S NORMAL USÜLLER SINAVI',
+  sections: [
+    {
+      items: [
+        { n: '1', parts: [{ q: 'MAXIMUM TAKEOFF WEIGHT', a: '2550 LBS' }] },
+        { n: '2', parts: [
+          { q: 'TOTAL FUEL CAPACITY', a: '56.0 U.S. GALLONS' },
+          { q: 'USABLE FUEL', a: '53.0 U.S. GALLONS' }
+        ] }
+      ]
+    },
+    {
+      head: 'SPEED LIMITATIONS',
+      items: [
+        { n: '3', parts: [{ q: 'VNE', a: '163 KIAS' }] },
+        { n: '4', parts: [{ q: 'VNO', a: '129 KIAS' }] },
+        { n: '5', parts: [
+          { q: 'VFE FLAP 10°', a: '110 KIAS' },
+          { q: '10°-FULL', a: '85 KIAS' }
+        ] },
+        { n: '6', parts: [{ q: 'WHITE ARC', a: '40 - 85 KIAS' }] },
+        { n: '7', parts: [{ q: 'GREEN ARC', a: '48 - 129 KIAS' }] },
+        { n: '8', parts: [{ q: 'CYLINDER HEAD TEMPERATURE GREEN ARC', a: '200 - 500 °F' }] },
+        { n: '9', parts: [{ q: 'OIL TEMPERATURE GREEN ARC', a: '100 - 245 °F' }] },
+        { n: '10', parts: [{ q: 'OIL PRESSURE GREEN ARC', a: '50 - 90 PSI' }] },
+        { n: '11', parts: [{ q: 'FUEL QUANTITY GREEN ARC', a: '5 - 24 GALLONS' }] },
+        { n: '12', parts: [
+          { q: 'AUTOPILOT MAX. ENGAGEMENT SPEED', a: '150 KIAS' },
+          { q: 'MIN. ENGAGEMENT SPEED', a: '70 KIAS' }
+        ] }
+      ]
+    },
+    {
+      head: 'BALKED LANDING',
+      items: [
+        { parts: [{ q: 'THROTTLE CONTROL', a: 'FULL (push full in)' }] },
+        { parts: [{ q: 'WING FLAPS', a: 'RETRACT to 20°' }] },
+        { parts: [{ q: 'CLIMB SPEED', a: '60 KIAS' }] },
+        { parts: [{ q: 'WING FLAPS', a: '10° (as obstacle is cleared), then UP (after reaching a safe altitude and 65 KIAS)' }] }
+      ]
+    },
+    {
+      head: 'NORMAL TAKEOFF',
+      items: [
+        { parts: [{ q: 'WING FLAPS', a: 'UP - 10° (10° preferred)' }] },
+        { parts: [{ q: 'THROTTLE CONTROL', a: 'FULL (push full in)' }] },
+        { parts: [{ q: 'MIXTURE CONTROL', a: 'RICH (above 3000 feet pressure altitude, lean for maximum RPM)' }] },
+        { parts: [{ q: 'ELEVATOR CONTROL LIFT NOSE WHEEL AT', a: '55 KIAS' }] },
+        { parts: [{ q: 'CLIMB AIRSPEED', a: '70 - 80 KIAS' }] },
+        { parts: [{ q: 'WING FLAPS', a: 'RETRACT (at safe altitude)' }] }
+      ]
+    },
+    {
+      head: 'AIRSPEEDS FOR NORMAL OPERATION',
+      items: [
+        { parts: [{ q: 'NORMAL APPROACH FLAPS UP', a: '65 - 75 KIAS' }] },
+        { parts: [{ q: 'NORMAL APPROACH FLAPS FULL', a: '60 - 70 KIAS' }] },
+        { parts: [{ q: 'SHORT FIELD APPROACH FLAPS FULL', a: '61 KIAS' }] }
+      ]
+    },
+    {
+      head: 'MAXIMUM DEMONSTRATED CROSSWIND VELOCITY',
+      note: 'POH tek değer veriyor: "Takeoff or Landing . . . 15 KNOTS" (Bölüm 4, sayfa 4-3). Sınav kağıdı iki satıra ayırmış ama ikisinin de cevabı aynı.',
+      items: [
+        { parts: [{ q: 'TAKEOFF FLAPS 10°', a: '15 KNOTS' }] },
+        { parts: [{ q: 'LANDING FLAPS FULL', a: '15 KNOTS' }] }
+      ]
+    }
+  ]
+};

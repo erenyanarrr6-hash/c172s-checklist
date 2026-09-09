@@ -101,6 +101,17 @@
     <div id="cramBody"></div>
   </section>
 
+  <!-- ============ GERÇEK SINAV KAĞIDI ============ -->
+  <section class="view" id="view-paper" hidden>
+    <div class="deck-bar">
+      <button class="btn btn-ghost btn-sm" data-goto="exam">‹ ÇIK</button>
+      <div class="deck-prog"><span id="paperFilled">0/30</span></div>
+      <div class="deck-score" id="paperScore"></div>
+    </div>
+    <div class="paper" id="paperBody"></div>
+    <div id="paperFoot"></div>
+  </section>
+
   <!-- ============ DESTE (karışık çalışma) ============ -->
   <section class="view" id="view-deck" hidden>
     <div class="deck-bar">
@@ -115,8 +126,13 @@
   <!-- ============ SINAV ============ -->
   <section class="view" id="view-exam" hidden>
     <div id="examIntro">
+      <div class="panel" style="margin-bottom:14px">
+        <div class="panel-label"><i></i>GERÇEK SINAV KAĞIDI</div>
+        <p class="rb-d" style="margin:0 0 4px">Cessna 172S Normal Usüller sınavının birebir kopyası — aynı sorular, aynı sıra, 30 boşluk. Süre yok, cevaplar POH 2020'den.</p>
+        <button class="btn btn-primary btn-block" id="paperStart">SINAV KAĞIDINI AÇ</button>
+      </div>
       <div class="panel">
-        <div class="panel-label"><i></i>SINAV MODU</div>
+        <div class="panel-label"><i></i>KARIŞIK SINAV</div>
         <ul class="brief">
           <li><b>20:00</b> dakika süre</li>
           <li><b>3</b> Emergency memory item prosedürü</li>

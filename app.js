@@ -115,7 +115,7 @@
   }
 
   /* ---------------- görünüm yönetimi ---------------- */
-  var VIEWS = ['home', 'cram', 'study', 'deck', 'exam'];
+  var VIEWS = ['home', 'cram', 'study', 'deck', 'exam', 'paper'];
   var current = 'home';
 
   function showView(name) {
@@ -124,7 +124,7 @@
       if (el) el.hidden = (v !== name);
     });
     current = name;
-    var navKey = (name === 'deck') ? 'study' : name;
+    var navKey = (name === 'deck') ? 'study' : (name === 'paper' ? 'exam' : name);
     Array.prototype.forEach.call(document.querySelectorAll('.sk'), function (b) {
       b.classList.toggle('active', b.dataset.goto === navKey);
     });
@@ -947,6 +947,144 @@
     renderHome();
     showView('home');
     alert('Sonuçlar kaydedildi. Yanlışların çalışma listelerinde üste taşındı.');
+  }
+
+  /* ---------------- GERÇEK SINAV KAĞIDI ---------------- */
+  var PAPER = [];   // düz alan listesi
+  EXAM_PAPER.sections.forEach(function (sec, si) {
+    sec.items.forEach(function (it, ii) {
+      it.parts.forEach(function (pt, pi) {
+        PAPER.push({
+          uid: 'pp:' + si + '-' + ii + '-' + pi,
+          n: it.n, q: pt.q, a: pt.a, sec: si, first: pi === 0
+        });
+      });
+    });
+  });
+
+  var paperAns = {}, paperMarks = null;
+
+  $('paperStart').addEventListener('click', function () {
+    paperAns = {}; paperMarks = null;
+    renderPaper();
+    showView('paper');
+  });
+
+  function paperFieldHTML(f) {
+    var s = stat(f.uid);
+    var flag = isWeak(f.uid) ? ' weakfield' : '';
+    return '<div class="pf' + flag + '" data-uid="' + f.uid + '">' +
+      '<label>' + esc(f.q) + '</label>' +
+      '<input class="ans pf-in" type="text" autocomplete="off" autocorrect="off" ' +
+      'autocapitalize="characters" spellcheck="false" value="' + esc(paperAns[f.uid] || '') + '">' +
+      (s.wrong ? '<span class="pf-hist">' + s.wrong + '× yanlış</span>' : '') +
+      '</div>';
+  }
+
+  function renderPaper() {
+    var host = $('paperBody');
+    var html = '<h2 class="paper-title">' + esc(EXAM_PAPER.title) + '</h2>';
+
+    EXAM_PAPER.sections.forEach(function (sec, si) {
+      if (sec.head) html += '<div class="paper-head">' + esc(sec.head) + '</div>';
+      sec.items.forEach(function (it, ii) {
+        html += '<div class="paper-row">' +
+          (it.n ? '<span class="paper-n">' + it.n + '-</span>' : '<span class="paper-n"></span>') +
+          '<div class="paper-fields">';
+        it.parts.forEach(function (pt, pi) {
+          html += paperFieldHTML(PAPER.filter(function (f) {
+            return f.uid === 'pp:' + si + '-' + ii + '-' + pi;
+          })[0]);
+        });
+        html += '</div></div>';
+      });
+      if (sec.note) html += '<p class="paper-note">' + esc(sec.note) + '</p>';
+    });
+    host.innerHTML = html;
+
+    Array.prototype.forEach.call(host.querySelectorAll('.pf-in'), function (inp) {
+      inp.addEventListener('input', function () {
+        paperAns[inp.parentNode.dataset.uid] = inp.value;
+        updatePaperCount();
+      });
+    });
+
+    $('paperScore').textContent = '';
+    $('paperFoot').innerHTML =
+      '<button class="btn btn-primary btn-block" id="paperCheck">CEVAPLARI GÖSTER VE PUANLA</button>';
+    $('paperCheck').addEventListener('click', gradePaper);
+    updatePaperCount();
+  }
+
+  function updatePaperCount() {
+    var filled = PAPER.filter(function (f) { return (paperAns[f.uid] || '').trim(); }).length;
+    $('paperFilled').textContent = filled + '/' + PAPER.length;
+  }
+
+  function gradePaper() {
+    if (!paperMarks) paperMarks = {};
+    var host = $('paperBody');
+    var html = '<h2 class="paper-title">' + esc(EXAM_PAPER.title) + '</h2>';
+
+    EXAM_PAPER.sections.forEach(function (sec, si) {
+      if (sec.head) html += '<div class="paper-head">' + esc(sec.head) + '</div>';
+      sec.items.forEach(function (it, ii) {
+        html += '<div class="paper-row graded">' +
+          (it.n ? '<span class="paper-n">' + it.n + '-</span>' : '<span class="paper-n"></span>') +
+          '<div class="paper-fields">';
+        it.parts.forEach(function (pt, pi) {
+          var uid = 'pp:' + si + '-' + ii + '-' + pi;
+          var mine = (paperAns[uid] || '').trim();
+          var m = paperMarks[uid];
+          html += '<div class="pf graded' + (m === true ? ' ok' : (m === false ? ' bad' : '')) + '">' +
+            '<label>' + esc(pt.q) + '</label>' +
+            '<div class="pf-mine' + (mine ? '' : ' empty') + '">' + esc(mine || 'boş') + '</div>' +
+            '<div class="pf-key">' + esc(pt.a) + '</div>' +
+            '<div class="mark-row">' +
+              '<button class="btn btn-ok btn-sm js-ok' + (m === true ? ' sel-ok' : '') + '" data-uid="' + uid + '">DOĞRU</button>' +
+              '<button class="btn btn-danger btn-sm js-bad' + (m === false ? ' sel-bad' : '') + '" data-uid="' + uid + '">YANLIŞ</button>' +
+            '</div>' +
+          '</div>';
+        });
+        html += '</div></div>';
+      });
+      if (sec.note) html += '<p class="paper-note">' + esc(sec.note) + '</p>';
+    });
+    host.innerHTML = html;
+
+    Array.prototype.forEach.call(host.querySelectorAll('.js-ok,.js-bad'), function (b) {
+      b.addEventListener('click', function () {
+        paperMarks[b.dataset.uid] = b.classList.contains('js-ok');
+        var y = window.scrollY;
+        gradePaper();
+        window.scrollTo(0, y);
+      });
+    });
+
+    var ok = PAPER.filter(function (f) { return paperMarks[f.uid] === true; }).length;
+    var marked = Object.keys(paperMarks).length;
+    $('paperScore').textContent = ok + '/' + PAPER.length;
+    $('paperFoot').innerHTML =
+      (marked < PAPER.length
+        ? '<div class="warnline">' + (PAPER.length - marked) + ' alan işaretlenmedi — kaydederken yanlış sayılır.</div>'
+        : '') +
+      '<div class="chunkres ' + (ok === PAPER.length ? 'ok' : 'bad') + '">SONUÇ ' + ok + '/' + PAPER.length + '</div>' +
+      '<button class="btn btn-primary btn-block" id="paperSave">SONUÇLARI KAYDET VE ÇIK</button>' +
+      '<button class="btn btn-ghost btn-block" id="paperAgain">KAĞIDI YENİDEN DOLDUR</button>';
+    $('paperSave').addEventListener('click', function () {
+      PAPER.forEach(function (f) { record(f.uid, paperMarks[f.uid] === true); });
+      paperAns = {}; paperMarks = null;
+      renderHome();
+      resetExamView();
+      showView('exam');
+      alert('Sonuçlar kaydedildi. Yanlış yaptığın alanlar kağıdı bir dahaki açışında kırmızı işaretli gelecek.');
+    });
+    $('paperAgain').addEventListener('click', function () {
+      paperAns = {}; paperMarks = null;
+      renderPaper();
+      window.scrollTo(0, 0);
+    });
+    window.scrollTo(0, 0);
   }
 
   /* ---------------- açılış ---------------- */

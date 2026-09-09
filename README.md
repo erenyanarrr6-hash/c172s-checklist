@@ -11,8 +11,9 @@ sayfada. "Cevapları Gizle" ile sağ taraf kapanır, satıra dokununca açılır
 önceki son tekrar için.
 
 **Çalışma Modu** — üç kategori ayrı ayrı:
-- Emergency (POH Bölüm 3 — **yalnızca memory item'lar**, yani POH'ta koyu yazılan
-  ezberlenmesi zorunlu adımlar; POH bold taraması ile doğrulandı)
+- Emergency (POH Bölüm 3 — prosedürün **tüm adımları görünür**, ama yalnızca
+  memory item'lar, yani POH'ta koyu yazılanlar sorulur; kalan adımlar yerinde
+  soluk ve pasif bilgi satırı olarak durur. POH bold taraması ile doğrulandı)
 - Normal (POH Bölüm 4 normal checklistler)
 - Hız & Limit (V-hızları, ağırlık ve motor limitleri) + "Karışık Deste" seçeneği
 
@@ -57,5 +58,6 @@ Arayüz sınav kağıdı gibi beyaz temalıdır; memory item'lar fosforlu kalem 
 işaretlidir. Prosedür metinleri POH orijinali olduğu için İngilizce bırakılmıştır.
 
 POH'ta hiç koyu adımı olmayan 4 prosedür (Emergency Landing Without Engine Power,
-Precautionary Landing With Engine Power, Ditching, Excessive Fuel Vapor) çalışma
-listesinde yer almaz; Ezber Kağıdı'nda ayrı bir başlık altında listelenir.
+Precautionary Landing With Engine Power, Ditching, Excessive Fuel Vapor) sorulacak
+bir şey içermediği için çalışma listesinde yer almaz; Ezber Kağıdı'nda tam metniyle
+"BİLGİ" kartı olarak durur.

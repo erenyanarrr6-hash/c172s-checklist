@@ -6,7 +6,7 @@
   'use strict';
 
   /* ---------------- sabitler ---------------- */
-  var DEADLINE = new Date(2026, 8, 10, 14, 30, 0, 0); // 10 Eylül 2026 14:30
+  var DEADLINE = new Date(2026, 9, 5, 14, 30, 0, 0); // 5 Ekim 2026 Pazartesi 14:30
   var PKEY = 'c172s_progress_v1';
   var EKEY = 'c172s_exam_v1';
   var MODEKEY = 'c172s_mode_v1';

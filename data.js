@@ -532,82 +532,188 @@ const SPEEDS = [
   { q: 'Tachometer - Green Arc, Sea Level', a: '2100 - 2500 RPM' },
   { q: 'Enroute Climb Speed, 10,000 ft (Normal)', a: '70 - 80 KIAS' },
   { q: 'Max Baggage - Area B (Station 108 to 142)', a: '50 LBS' },
-  { q: 'Maximum Takeoff Weight (Utility Category)', a: '2200 LBS' }
+  { q: 'Maximum Takeoff Weight (Utility Category)', a: '2200 LBS' },
+  { q: 'Flight Load Factor - Normal Category, Flaps UP', a: '+3.8 g / -1.52 g' },
+  { q: 'Flight Load Factor - Normal Category, Flaps FULL', a: '+3.0 g' },
+  { q: 'Flight Load Factor - Utility Category, Flaps UP', a: '+4.4 g / -1.76 g' },
+  { q: 'Maximum Useful Load (Normal Category)', a: '895 LBS' },
+  { q: 'Maximum Useful Load (Utility Category)', a: '545 LBS' },
+  { q: 'Standard Empty Weight', a: '1663 LBS' },
+  { q: 'Engine Power at 2700 RPM', a: '180 BHP' },
+  { q: 'Engine Manufacturer and Model', a: 'Textron Lycoming IO-360-L2A' },
+  { q: 'Number of Magnetos', a: '2' },
+  { q: 'Number of Spark Plugs', a: '8' },
+  { q: 'Number of Cylinders', a: '4' },
+  { q: 'Recommended Starter Duty Cycle', a: '10 sec start / 20 sec cool, 3 cycles - then 10 min cool down, then 3 more cycles' },
+  { q: 'Static RPM Range at Full Throttle', a: '2300 - 2400 RPM' },
+  { q: 'Oil Capacity - Sump', a: '8 U.S. QUARTS' },
+  { q: 'Oil Capacity - Total', a: '9 U.S. QUARTS' },
+  { q: 'VSO - Stall Speed, Flaps FULL (beginning of white arc)', a: '40 KIAS' },
+  { q: 'VS1 - Stall Speed, Clean Configuration (beginning of green arc)', a: '48 KIAS' },
+  { q: 'LOW VACUUM Annunciator - comes on below', a: '4.5 in.Hg' },
+  { q: 'LOW VOLTS Annunciator - comes on below', a: '24.5 V' },
+  { q: 'HIGH VOLTS Annunciator - comes on above', a: '32.0 V' },
+  { q: 'CO LVL HIGH Annunciator - comes on at or above', a: '50 PPM' },
+  { q: 'OIL PRESSURE Annunciator - comes on below', a: '20 PSI' },
+  { q: 'Propeller Diameter - Maximum', a: '76 INCHES' }
 ];
 
 // ============================================================
-// GERÇEK SINAV KAĞIDI — "CESSNA 172S NORMAL USÜLLER SINAVI"
-// Sorular sınav kağıdının birebir sırası; cevaplar POH 2020'den
-// (Bölüm 2 limitler / Bölüm 4 normal usüller) doğrulanarak yazıldı.
+// GERÇEK SINAV KAĞITLARI
+// Sorular Eren'in sınav kağıtlarının birebir sırası; cevaplar POH
+// 2020'den doğrulanarak yazıldı. Kağıt 2'de LOW VACUUM, sınavda
+// beklenen 4.5 in.Hg olarak bırakıldı (açıklama section note'unda).
 // ============================================================
-const EXAM_PAPER = {
-  title: 'CESSNA 172S NORMAL USÜLLER SINAVI',
-  sections: [
-    {
-      items: [
-        { n: '1', parts: [{ q: 'MAXIMUM TAKEOFF WEIGHT', a: '2550 LBS' }] },
-        { n: '2', parts: [
-          { q: 'TOTAL FUEL CAPACITY', a: '56.0 U.S. GALLONS' },
-          { q: 'USABLE FUEL', a: '53.0 U.S. GALLONS' }
-        ] }
-      ]
-    },
-    {
-      head: 'SPEED LIMITATIONS',
-      items: [
-        { n: '3', parts: [{ q: 'VNE', a: '163 KIAS' }] },
-        { n: '4', parts: [{ q: 'VNO', a: '129 KIAS' }] },
-        { n: '5', parts: [
-          { q: 'VFE FLAP 10°', a: '110 KIAS' },
-          { q: '10°-FULL', a: '85 KIAS' }
-        ] },
-        { n: '6', parts: [{ q: 'WHITE ARC', a: '40 - 85 KIAS' }] },
-        { n: '7', parts: [{ q: 'GREEN ARC', a: '48 - 129 KIAS' }] },
-        { n: '8', parts: [{ q: 'CYLINDER HEAD TEMPERATURE GREEN ARC', a: '200 - 500 °F' }] },
-        { n: '9', parts: [{ q: 'OIL TEMPERATURE GREEN ARC', a: '100 - 245 °F' }] },
-        { n: '10', parts: [{ q: 'OIL PRESSURE GREEN ARC', a: '50 - 90 PSI' }] },
-        { n: '11', parts: [{ q: 'FUEL QUANTITY GREEN ARC', a: '5 - 24 GALLONS' }] },
-        { n: '12', parts: [
-          { q: 'AUTOPILOT MAX. ENGAGEMENT SPEED', a: '150 KIAS' },
-          { q: 'MIN. ENGAGEMENT SPEED', a: '70 KIAS' }
-        ] }
-      ]
-    },
-    {
-      head: 'BALKED LANDING',
-      items: [
-        { parts: [{ q: 'THROTTLE CONTROL', a: 'FULL (push full in)' }] },
-        { parts: [{ q: 'WING FLAPS', a: 'RETRACT to 20°' }] },
-        { parts: [{ q: 'CLIMB SPEED', a: '60 KIAS' }] },
-        { parts: [{ q: 'WING FLAPS', a: '10° (as obstacle is cleared), then UP (after reaching a safe altitude and 65 KIAS)' }] }
-      ]
-    },
-    {
-      head: 'NORMAL TAKEOFF',
-      items: [
-        { parts: [{ q: 'WING FLAPS', a: 'UP - 10° (10° preferred)' }] },
-        { parts: [{ q: 'THROTTLE CONTROL', a: 'FULL (push full in)' }] },
-        { parts: [{ q: 'MIXTURE CONTROL', a: 'RICH (above 3000 feet pressure altitude, lean for maximum RPM)' }] },
-        { parts: [{ q: 'ELEVATOR CONTROL LIFT NOSE WHEEL AT', a: '55 KIAS' }] },
-        { parts: [{ q: 'CLIMB AIRSPEED', a: '70 - 80 KIAS' }] },
-        { parts: [{ q: 'WING FLAPS', a: 'RETRACT (at safe altitude)' }] }
-      ]
-    },
-    {
-      head: 'AIRSPEEDS FOR NORMAL OPERATION',
-      items: [
-        { parts: [{ q: 'NORMAL APPROACH FLAPS UP', a: '65 - 75 KIAS' }] },
-        { parts: [{ q: 'NORMAL APPROACH FLAPS FULL', a: '60 - 70 KIAS' }] },
-        { parts: [{ q: 'SHORT FIELD APPROACH FLAPS FULL', a: '61 KIAS' }] }
-      ]
-    },
-    {
-      head: 'MAXIMUM DEMONSTRATED CROSSWIND VELOCITY',
-      note: 'POH tek değer veriyor: "Takeoff or Landing . . . 15 KNOTS" (Bölüm 4, sayfa 4-3). Sınav kağıdı iki satıra ayırmış ama ikisinin de cevabı aynı.',
-      items: [
-        { parts: [{ q: 'TAKEOFF FLAPS 10°', a: '15 KNOTS' }] },
-        { parts: [{ q: 'LANDING FLAPS FULL', a: '15 KNOTS' }] }
-      ]
-    }
-  ]
-};
+const EXAM_PAPERS = [
+  {
+    key: 'pp',
+    name: 'KAĞIT 1',
+    title: 'CESSNA 172S NORMAL USÜLLER SINAVI',
+    sub: 'Limitler · hızlar · balked landing · normal takeoff',
+    sections: [
+      {
+        items: [
+          { n: '1', parts: [{ q: 'MAXIMUM TAKEOFF WEIGHT', a: '2550 LBS' }] },
+          { n: '2', parts: [
+            { q: 'TOTAL FUEL CAPACITY', a: '56.0 U.S. GALLONS' },
+            { q: 'USABLE FUEL', a: '53.0 U.S. GALLONS' }
+          ] }
+        ]
+      },
+      {
+        head: 'SPEED LIMITATIONS',
+        items: [
+          { n: '3', parts: [{ q: 'VNE', a: '163 KIAS' }] },
+          { n: '4', parts: [{ q: 'VNO', a: '129 KIAS' }] },
+          { n: '5', parts: [
+            { q: 'VFE FLAP 10°', a: '110 KIAS' },
+            { q: '10°-FULL', a: '85 KIAS' }
+          ] },
+          { n: '6', parts: [{ q: 'WHITE ARC', a: '40 - 85 KIAS' }] },
+          { n: '7', parts: [{ q: 'GREEN ARC', a: '48 - 129 KIAS' }] },
+          { n: '8', parts: [{ q: 'CYLINDER HEAD TEMPERATURE GREEN ARC', a: '200 - 500 °F' }] },
+          { n: '9', parts: [{ q: 'OIL TEMPERATURE GREEN ARC', a: '100 - 245 °F' }] },
+          { n: '10', parts: [{ q: 'OIL PRESSURE GREEN ARC', a: '50 - 90 PSI' }] },
+          { n: '11', parts: [{ q: 'FUEL QUANTITY GREEN ARC', a: '5 - 24 GALLONS' }] },
+          { n: '12', parts: [
+            { q: 'AUTOPILOT MAX. ENGAGEMENT SPEED', a: '150 KIAS' },
+            { q: 'MIN. ENGAGEMENT SPEED', a: '70 KIAS' }
+          ] }
+        ]
+      },
+      {
+        head: 'BALKED LANDING',
+        items: [
+          { parts: [{ q: 'THROTTLE CONTROL', a: 'FULL (push full in)' }] },
+          { parts: [{ q: 'WING FLAPS', a: 'RETRACT to 20°' }] },
+          { parts: [{ q: 'CLIMB SPEED', a: '60 KIAS' }] },
+          { parts: [{ q: 'WING FLAPS', a: '10° (as obstacle is cleared), then UP (after reaching a safe altitude and 65 KIAS)' }] }
+        ]
+      },
+      {
+        head: 'NORMAL TAKEOFF',
+        items: [
+          { parts: [{ q: 'WING FLAPS', a: 'UP - 10° (10° preferred)' }] },
+          { parts: [{ q: 'THROTTLE CONTROL', a: 'FULL (push full in)' }] },
+          { parts: [{ q: 'MIXTURE CONTROL', a: 'RICH (above 3000 feet pressure altitude, lean for maximum RPM)' }] },
+          { parts: [{ q: 'ELEVATOR CONTROL LIFT NOSE WHEEL AT', a: '55 KIAS' }] },
+          { parts: [{ q: 'CLIMB AIRSPEED', a: '70 - 80 KIAS' }] },
+          { parts: [{ q: 'WING FLAPS', a: 'RETRACT (at safe altitude)' }] }
+        ]
+      },
+      {
+        head: 'AIRSPEEDS FOR NORMAL OPERATION',
+        items: [
+          { parts: [{ q: 'NORMAL APPROACH FLAPS UP', a: '65 - 75 KIAS' }] },
+          { parts: [{ q: 'NORMAL APPROACH FLAPS FULL', a: '60 - 70 KIAS' }] },
+          { parts: [{ q: 'SHORT FIELD APPROACH FLAPS FULL', a: '61 KIAS' }] }
+        ]
+      },
+      {
+        head: 'MAXIMUM DEMONSTRATED CROSSWIND VELOCITY',
+        note: 'POH tek değer veriyor: "Takeoff or Landing . . . 15 KNOTS" (Bölüm 4, sayfa 4-3). Sınav kağıdı iki satıra ayırmış ama ikisinin de cevabı aynı.',
+        items: [
+          { parts: [{ q: 'TAKEOFF FLAPS 10°', a: '15 KNOTS' }] },
+          { parts: [{ q: 'LANDING FLAPS FULL', a: '15 KNOTS' }] }
+        ]
+      }
+    ]
+  },
+
+  {
+    key: 'p2',
+    name: 'KAĞIT 2',
+    title: 'CESSNA 172S NORMAL USÜLLER SINAVI',
+    sub: 'Ağırlık & load factor · motor · kapasite · hızlar · annunciator',
+    sections: [
+      {
+        head: '1) WEIGHT AND LOAD FACTOR',
+        items: [
+          { n: '1', parts: [
+            { q: 'NORMAL CATEGORY FLAPS UP LOAD FACTOR (+)', a: '+3.8 g' },
+            { q: 'NORMAL CATEGORY FLAPS UP LOAD FACTOR (−)', a: '-1.52 g' }
+          ] },
+          { n: '2', parts: [{ q: 'UTILITY CATEGORY MAXIMUM USEFUL WEIGHT', a: '545 POUNDS' }] },
+          { n: '3', parts: [{ q: 'STANDARD EMPTY WEIGHT', a: '1663 POUNDS' }] },
+          { n: '4', parts: [{ q: 'BAGGAGE A CAPACITY', a: '120 POUNDS' }] }
+        ]
+      },
+      {
+        head: '2) ENGINE',
+        note: 'POH: 10 saniye marş, 20 saniye soğuma — bu çevrim 3 kez. Sonra 10 DAKİKA soğuma, ardından yine 3 çevrim 10/20 saniye.',
+        items: [
+          { n: '1', parts: [{ q: 'AT 2700 RPM', a: '180 BHP' }] },
+          { n: '2', parts: [{ q: 'MAGNETOS NUMBER', a: '2' }] },
+          { n: '3', parts: [{ q: 'SPARKING PLUG NUMBER', a: '8' }] },
+          { n: '4', parts: [{ q: 'CYLINDER NUMBER', a: '4' }] },
+          { n: '5', parts: [
+            { q: 'STARTER DUTY CYCLE — SEC START', a: '10 sec' },
+            { q: 'SEC COOL DOWN', a: '20 sec' },
+            { q: 'FOR ___ TIMES', a: '3 times' },
+            { q: 'THEN ___ SEC START', a: '10 sec' },
+            { q: 'SEC COOL DOWN', a: '20 sec' },
+            { q: 'FOR ANOTHER ___ TIMES', a: '3 times' }
+          ] }
+        ]
+      },
+      {
+        head: '3) CAPACITY',
+        note: 'Sump 8 quart, toplam 9 quart. Soru "total" dediği için cevap 9.',
+        items: [
+          { n: '1', parts: [{ q: 'USABLE FUEL', a: '53 GALLONS' }] },
+          { n: '2', parts: [{ q: 'TOTAL OIL', a: '9 QUARTS' }] }
+        ]
+      },
+      {
+        head: '4) AIRSPEEDS',
+        items: [
+          { n: '1', parts: [{ q: 'Vg', a: '68 KIAS' }] },
+          { n: '2', parts: [{ q: 'Vno', a: '129 KIAS' }] },
+          { n: '3', parts: [{ q: 'Vne', a: '163 KIAS' }] },
+          { n: '4', parts: [{ q: 'Vx', a: '62 KIAS' }] },
+          { n: '5', parts: [{ q: 'Vy', a: '74 KIAS' }] },
+          { n: '6', parts: [{ q: 'Vso (Flaps Full, max weight, beginning of white arc)', a: '40 KIAS' }] },
+          { n: '7', parts: [{ q: 'Vs1 (Clean configuration, beginning of green arc)', a: '48 KIAS' }] }
+        ]
+      },
+      {
+        head: '5) ANNUNCIATORS',
+        note: 'Sınavda beklenen cevap 4.5 in.Hg — bu kağıda 100 verilmiş, anahtarı ona göre bıraktık. Bilgi olsun: POH Bölüm 7'de LOW VACUUM annunciator eşiği 3.5 in.Hg olarak geçer; 4.5 ise yeşil bandın alt sınırıdır.',
+        items: [
+          { n: '1', parts: [{ q: 'LOW VACUUM: BELOW', a: '4.5 in.Hg' }] },
+          { n: '2', parts: [{ q: 'LOW VOLTS: BELOW', a: '24.5 V' }] },
+          { n: '3', parts: [{ q: 'CO LEVEL HIGH: AT / ABOVE', a: '50 PPM' }] },
+          { n: '4', parts: [{ q: 'OIL PRESSURE: BELOW', a: '20 PSI' }] }
+        ]
+      },
+      {
+        head: '6) NORMAL APPROACH',
+        items: [
+          { n: '1', parts: [{ q: 'FLAPS UP', a: '65 - 75 KIAS' }] },
+          { n: '2', parts: [{ q: 'FLAPS FULL', a: '60 - 70 KIAS' }] },
+          { n: '3', parts: [{ q: 'SHORT FIELD APPROACH, FLAPS FULL', a: '61 KIAS' }] }
+        ]
+      }
+    ]
+  }
+];

@@ -949,25 +949,34 @@
     alert('Sonuçlar kaydedildi. Yanlışların çalışma listelerinde üste taşındı.');
   }
 
-  /* ---------------- GERÇEK SINAV KAĞIDI ---------------- */
-  var PAPER = [];   // düz alan listesi
-  EXAM_PAPER.sections.forEach(function (sec, si) {
-    sec.items.forEach(function (it, ii) {
-      it.parts.forEach(function (pt, pi) {
-        PAPER.push({
-          uid: 'pp:' + si + '-' + ii + '-' + pi,
-          n: it.n, q: pt.q, a: pt.a, sec: si, first: pi === 0
+  /* ---------------- GERÇEK SINAV KAĞITLARI ---------------- */
+  // Her kağıdın düz alan listesi; uid = <kağıt anahtarı>:<bölüm>-<madde>-<parça>
+  EXAM_PAPERS.forEach(function (paper) {
+    paper.fields = [];
+    paper.sections.forEach(function (sec, si) {
+      sec.items.forEach(function (it, ii) {
+        it.parts.forEach(function (pt, pi) {
+          paper.fields.push({
+            uid: paper.key + ':' + si + '-' + ii + '-' + pi,
+            n: it.n, q: pt.q, a: pt.a
+          });
         });
       });
     });
   });
 
+  var curPaper = 0;
   var paperAns = {}, paperMarks = null;
+  function paperDef() { return EXAM_PAPERS[curPaper]; }
+  function paperFields() { return paperDef().fields; }
 
-  $('paperStart').addEventListener('click', function () {
-    paperAns = {}; paperMarks = null;
-    renderPaper();
-    showView('paper');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-paper]'), function (b) {
+    b.addEventListener('click', function () {
+      curPaper = parseInt(b.dataset.paper, 10) || 0;
+      paperAns = {}; paperMarks = null;
+      renderPaper();
+      showView('paper');
+    });
   });
 
   function paperFieldHTML(f) {
@@ -982,18 +991,20 @@
   }
 
   function renderPaper() {
+    var def = paperDef();
     var host = $('paperBody');
-    var html = '<h2 class="paper-title">' + esc(EXAM_PAPER.title) + '</h2>';
+    var html = '<h2 class="paper-title">' + esc(def.title) + '</h2>' +
+      '<p class="paper-sub">' + esc(def.name) + ' · ' + esc(def.sub) + '</p>';
 
-    EXAM_PAPER.sections.forEach(function (sec, si) {
+    def.sections.forEach(function (sec, si) {
       if (sec.head) html += '<div class="paper-head">' + esc(sec.head) + '</div>';
       sec.items.forEach(function (it, ii) {
         html += '<div class="paper-row">' +
           (it.n ? '<span class="paper-n">' + it.n + '-</span>' : '<span class="paper-n"></span>') +
           '<div class="paper-fields">';
         it.parts.forEach(function (pt, pi) {
-          html += paperFieldHTML(PAPER.filter(function (f) {
-            return f.uid === 'pp:' + si + '-' + ii + '-' + pi;
+          html += paperFieldHTML(paperFields().filter(function (f) {
+            return f.uid === def.key + ':' + si + '-' + ii + '-' + pi;
           })[0]);
         });
         html += '</div></div>';
@@ -1017,23 +1028,26 @@
   }
 
   function updatePaperCount() {
-    var filled = PAPER.filter(function (f) { return (paperAns[f.uid] || '').trim(); }).length;
-    $('paperFilled').textContent = filled + '/' + PAPER.length;
+    var all = paperFields();
+    var filled = all.filter(function (f) { return (paperAns[f.uid] || '').trim(); }).length;
+    $('paperFilled').textContent = filled + '/' + all.length;
   }
 
   function gradePaper() {
     if (!paperMarks) paperMarks = {};
+    var def = paperDef();
     var host = $('paperBody');
-    var html = '<h2 class="paper-title">' + esc(EXAM_PAPER.title) + '</h2>';
+    var html = '<h2 class="paper-title">' + esc(def.title) + '</h2>' +
+      '<p class="paper-sub">' + esc(def.name) + ' · ' + esc(def.sub) + '</p>';
 
-    EXAM_PAPER.sections.forEach(function (sec, si) {
+    def.sections.forEach(function (sec, si) {
       if (sec.head) html += '<div class="paper-head">' + esc(sec.head) + '</div>';
       sec.items.forEach(function (it, ii) {
         html += '<div class="paper-row graded">' +
           (it.n ? '<span class="paper-n">' + it.n + '-</span>' : '<span class="paper-n"></span>') +
           '<div class="paper-fields">';
         it.parts.forEach(function (pt, pi) {
-          var uid = 'pp:' + si + '-' + ii + '-' + pi;
+          var uid = def.key + ':' + si + '-' + ii + '-' + pi;
           var mine = (paperAns[uid] || '').trim();
           var m = paperMarks[uid];
           html += '<div class="pf graded' + (m === true ? ' ok' : (m === false ? ' bad' : '')) + '">' +
@@ -1061,18 +1075,19 @@
       });
     });
 
-    var ok = PAPER.filter(function (f) { return paperMarks[f.uid] === true; }).length;
+    var all = paperFields();
+    var ok = all.filter(function (f) { return paperMarks[f.uid] === true; }).length;
     var marked = Object.keys(paperMarks).length;
-    $('paperScore').textContent = ok + '/' + PAPER.length;
+    $('paperScore').textContent = ok + '/' + all.length;
     $('paperFoot').innerHTML =
-      (marked < PAPER.length
-        ? '<div class="warnline">' + (PAPER.length - marked) + ' alan işaretlenmedi — kaydederken yanlış sayılır.</div>'
+      (marked < all.length
+        ? '<div class="warnline">' + (all.length - marked) + ' alan işaretlenmedi — kaydederken yanlış sayılır.</div>'
         : '') +
-      '<div class="chunkres ' + (ok === PAPER.length ? 'ok' : 'bad') + '">SONUÇ ' + ok + '/' + PAPER.length + '</div>' +
+      '<div class="chunkres ' + (ok === all.length ? 'ok' : 'bad') + '">SONUÇ ' + ok + '/' + all.length + '</div>' +
       '<button class="btn btn-primary btn-block" id="paperSave">SONUÇLARI KAYDET VE ÇIK</button>' +
       '<button class="btn btn-ghost btn-block" id="paperAgain">KAĞIDI YENİDEN DOLDUR</button>';
     $('paperSave').addEventListener('click', function () {
-      PAPER.forEach(function (f) { record(f.uid, paperMarks[f.uid] === true); });
+      all.forEach(function (f) { record(f.uid, paperMarks[f.uid] === true); });
       paperAns = {}; paperMarks = null;
       renderHome();
       resetExamView();

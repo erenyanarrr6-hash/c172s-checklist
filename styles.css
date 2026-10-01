@@ -394,6 +394,10 @@ ul.brief li::marker{color:var(--dim-2)}
   font-size:13px;font-weight:800;letter-spacing:.04em;text-align:center;
   margin:0 0 18px;text-transform:uppercase;
 }
+.paper-sub{
+  text-align:center;font-size:10.5px;letter-spacing:.06em;color:var(--dim);
+  margin:-12px 0 18px;
+}
 .paper-head{
   font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
   margin:20px 0 10px;padding-bottom:4px;border-bottom:1px solid var(--line);

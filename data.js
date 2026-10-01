@@ -561,7 +561,7 @@ const SPEEDS = [
 // ============================================================
 // GERÇEK SINAV KAĞITLARI
 // Sorular Eren'in sınav kağıtlarının birebir sırası; cevaplar POH
-// 2020'den doğrulanarak yazıldı. Kağıt 2'de LOW VACUUM, sınavda
+// 2020'den doğrulanarak yazıldı. Kağıt 2’de LOW VACUUM, sınavda
 // beklenen 4.5 in.Hg olarak bırakıldı (açıklama section note'unda).
 // ============================================================
 const EXAM_PAPERS = [
@@ -698,7 +698,7 @@ const EXAM_PAPERS = [
       },
       {
         head: '5) ANNUNCIATORS',
-        note: 'Sınavda beklenen cevap 4.5 in.Hg — bu kağıda 100 verilmiş, anahtarı ona göre bıraktık. Bilgi olsun: POH Bölüm 7'de LOW VACUUM annunciator eşiği 3.5 in.Hg olarak geçer; 4.5 ise yeşil bandın alt sınırıdır.',
+        note: 'Sınavda beklenen cevap 4.5 in.Hg — bu kağıda 100 verilmiş, anahtarı ona göre bıraktık. Bilgi olsun: POH Bölüm 7’de LOW VACUUM annunciator eşiği 3.5 in.Hg olarak geçer; 4.5 ise yeşil bandın alt sınırıdır.',
         items: [
           { n: '1', parts: [{ q: 'LOW VACUUM: BELOW', a: '4.5 in.Hg' }] },
           { n: '2', parts: [{ q: 'LOW VOLTS: BELOW', a: '24.5 V' }] },

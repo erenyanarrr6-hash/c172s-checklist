@@ -458,9 +458,9 @@ ul.brief li::marker{color:var(--dim-2)}
   text-transform:uppercase;padding-left:.4em;margin-bottom:5px;
 }
 .sig-name{
-  font-family:var(--mono);font-size:32px;font-weight:700;letter-spacing:.26em;
+  font-family:var(--mono);font-size:21px;font-weight:700;letter-spacing:.24em;
   color:#f0c53c;padding-left:.26em;line-height:1.05;
-  text-shadow:0 0 26px rgba(240,197,60,.35);
+  text-shadow:0 0 18px rgba(240,197,60,.32);
 }
 .sig-quote{
   margin:12px auto 0;padding-top:11px;max-width:300px;
@@ -469,7 +469,7 @@ ul.brief li::marker{color:var(--dim-2)}
   font-size:13px;line-height:1.55;color:rgba(255,255,255,.8);
 }
 @media(min-width:620px){
-  .sig-name{font-size:40px}
+  .sig-name{font-size:26px}
   .sig-quote{font-size:14.5px;max-width:360px}
 }
 

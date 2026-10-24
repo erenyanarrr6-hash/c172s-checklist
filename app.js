@@ -10,6 +10,17 @@
   var PKEY = 'c172s_progress_v1';
   var EKEY = 'c172s_exam_v1';
   var MODEKEY = 'c172s_mode_v1';
+  var NEWSKEY = 'c172s_news_v1';
+
+  // Açılışta gösterilen "bu sürümde ne değişti" kartı.
+  // id değişince kart herkese bir kez daha gösterilir.
+  var NEWS = {
+    id: '2026-10-24-designer-tag',
+    title: 'BU SÜRÜMDE NE DEĞİŞTİ',
+    items: [
+      'Alttaki designer tag değişti — ana ekranın en altına bak.'
+    ]
+  };
   var CHUNK = 8;               // uzun checklistler bu boyda bölümlere ayrılır
   var EXAM_MINUTES = 20;
   var EXAM_MIX = { emergency: 3, normal: 3, speed: 8 };
@@ -158,8 +169,6 @@
         $(id).textContent = '00';
         $(id).classList.add('cd-over');
       });
-      var d = document.querySelector('.cd-date');
-      if (d) d.textContent = 'Sınav zamanı geldi — bol şans!';
       return;
     }
     var s = Math.floor(diff / 1000);
@@ -170,7 +179,51 @@
   }
 
   /* ---------------- ANA SAYFA ---------------- */
+  function renderNews() {
+    var host = $('newsHost');
+    if (!host) return;
+    if (loadJSON(NEWSKEY, '') === NEWS.id) { host.innerHTML = ''; return; }
+    host.innerHTML =
+      '<div class="news">' +
+        '<div class="news-head">' +
+          '<span class="news-badge">YENİ</span>' +
+          '<span class="news-title">' + esc(NEWS.title) + '</span>' +
+        '</div>' +
+        '<ul class="news-list">' +
+          NEWS.items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') +
+        '</ul>' +
+        '<button class="btn btn-primary btn-block news-ok" id="newsOk">ANLADIM</button>' +
+      '</div>';
+    $('newsOk').addEventListener('click', function () {
+      saveJSON(NEWSKEY, NEWS.id);
+      renderNews();
+    });
+  }
+
+  // Açılışta bir uyarı seçilir; kutuya dokununca yenisi yanar.
+  var annunIdx = Math.floor(Math.random() * TOXIC.length);
+
+  function renderAnnun() {
+    var host = $('annunHost');
+    if (!host || !TOXIC.length) return;
+    var a = TOXIC[annunIdx % TOXIC.length];
+    host.innerHTML =
+      '<div class="annun ' + (a.lvl === 'warn' ? 'warn' : 'caution') + '" id="annunBox">' +
+        '<div class="annun-led"></div>' +
+        '<div class="annun-body">' +
+          '<div class="annun-lbl">' + (a.lvl === 'warn' ? 'WARNING' : 'CAUTION') + '</div>' +
+          '<div class="annun-txt" lang="en">' + esc(a.t.toUpperCase()) + '</div>' +
+        '</div>' +
+      '</div>';
+    $('annunBox').addEventListener('click', function () {
+      annunIdx = (annunIdx + 1 + Math.floor(Math.random() * (TOXIC.length - 1))) % TOXIC.length;
+      renderAnnun();
+    });
+  }
+
   function renderHome() {
+    renderAnnun();
+    renderNews();
     var row = $('statRow');
     row.innerHTML = '';
     ['emergency', 'normal', 'speed'].forEach(function (cat) {

@@ -1,6 +1,6 @@
 /* C172S Checklist Trainer — service worker
    Uygulama kabuğu önbelleğe alınır; uçak modunda / internetsiz de açılır. */
-const CACHE = 'c172s-v14';
+const CACHE = 'c172s-v15';
 const ASSETS = [
   './',
   'index.html',

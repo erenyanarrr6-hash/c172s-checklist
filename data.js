@@ -728,6 +728,7 @@ const TOXIC = [
   { lvl: 'warn',    t: 'Best glide is 68. Best decision was not leaving.' },
   { lvl: 'warn',    t: 'The red arc starts at 163. You lived there.' },
   { lvl: 'warn',    t: 'Delete it. You will still remember the name.' },
+  { lvl: 'caution', t: 'You will handle the engine failure. You never handled me.' },
   { lvl: 'caution', t: 'Memory items do not fade. Neither do I.' },
   { lvl: 'caution', t: 'You open this at night. It is not for the checklist.' },
   { lvl: 'caution', t: 'Clearance limit: me.' },
